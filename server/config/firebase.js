@@ -6,14 +6,27 @@ const path = require('path');
 // and place it in the server/config directory.
 
 try {
-  const serviceAccount = require('./ksaceventmanagement-firebase-adminsdk-fbsvc-68ff4d6bd1.json');
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-  console.log('Firebase Admin initialized successfully.');
+  let serviceAccount;
+
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+  } else {
+    try {
+      serviceAccount = require('./ksaceventmanagement-firebase-adminsdk-fbsvc-68ff4d6bd1.json');
+    } catch (e) {
+      console.warn('⚠️ WARNING: No Firebase Service Account found (Env var or JSON file).');
+      console.warn('Please add FIREBASE_SERVICE_ACCOUNT_JSON to your environment variables.');
+    }
+  }
+
+  if (serviceAccount) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log('✅ Firebase Admin initialized successfully.');
+  }
 } catch (error) {
-  console.error('Firebase Admin initialization error:', error.message);
-  console.warn('CRITICAL: Please ensure your service account JSON is in server/config/');
+  console.error('❌ Firebase Admin initialization error:', error.message);
 }
 
 const db = admin.firestore();

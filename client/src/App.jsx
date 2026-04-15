@@ -13,6 +13,10 @@ import ProposalDetail from './pages/proposals/ProposalDetail';
 
 import { useAuth } from './context/AuthContext';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+
+// Set the API Base URL for Production
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || '';
 
 function App() {
   return (
