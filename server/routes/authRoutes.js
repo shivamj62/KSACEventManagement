@@ -9,4 +9,7 @@ router.post('/register', authenticateUser, registerUser);
 // Route to get a list of users by a certain role (e.g. 'fic' or 'ksac_core')
 router.get('/role/:role', authenticateUser, getUsersByRole);
 
+// Route to get the current user's profile
+router.get('/profile', authenticateUser, require('../controllers/authController').getCurrentUser);
+
 module.exports = router;

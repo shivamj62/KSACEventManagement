@@ -36,13 +36,13 @@ const getProposals = async (req, res) => {
 
     let query;
     if (role === 'student') {
-      query = db.collection('proposals').where('studentId', '==', uid).orderBy('createdAt', 'desc');
+      query = db.collection('proposals').where('studentId', '==', uid);
     } else if (role === 'fic') {
-      query = db.collection('proposals').where('ficId', '==', uid).orderBy('createdAt', 'desc');
+      query = db.collection('proposals').where('ficId', '==', uid);
     } else if (role === 'ksac_core') {
-      query = db.collection('proposals').where('ksacCoreIds', 'array-contains', uid).orderBy('createdAt', 'desc');
+      query = db.collection('proposals').where('ksacCoreIds', 'array-contains', uid);
     } else if (role === 'admin') {
-      query = db.collection('proposals').orderBy('createdAt', 'desc');
+      query = db.collection('proposals');
     } else {
       return res.status(403).json({ message: 'Forbidden.' });
     }

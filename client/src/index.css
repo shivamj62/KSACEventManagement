@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #17d15a !important; /* CMYK Green Force */
+    --primary-hover: #14b34d !important;
+  }
+
+  body {
+    @apply bg-background text-text-primary;
+  }
+}
+
+@layer components {
+  /* High-Specificity Overrides */
+  .text-primary { color: #17d15a !important; }
+  .bg-primary { background-color: #17d15a !important; }
+  .border-primary { border-color: #17d15a !important; }
+  .shadow-primary\/20 { --tw-shadow-color: rgba(23, 209, 90, 0.2) !important; }
+
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl shadow-glass;
+  }
+  
+  .glass-input {
+    @apply bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 outline-none transition-all
+           focus:bg-white/10 focus:border-primary/50 text-text-primary placeholder:text-text-muted;
+  }
+  
+  .btn-primary {
+    background-color: #17d15a !important;
+    color: white !important;
+    @apply font-semibold py-2.5 px-6 rounded-lg transition-all duration-300 shadow-lg hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .btn-primary:hover {
+    background-color: #14b34d !important;
+  }
+
+  .nav-blur {
+    @apply sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-white/5;
+  }
+}

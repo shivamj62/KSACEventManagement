@@ -50,17 +50,17 @@ const generateProposalPDF = async (proposalData) => {
     /* Cover Page */
     .cover { height: 297mm; display: flex; flex-direction: column; justify-content: center; align-items: center;
              background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; text-align: center; padding: 60px; page-break-after: always; }
-    .cover-logo { font-size: 48pt; font-weight: 700; color: #e94560; margin-bottom: 8px; letter-spacing: 6px; }
+    .cover-logo { font-size: 48pt; font-weight: 700; color: #17d15a; margin-bottom: 8px; letter-spacing: 6px; }
     .cover-subtitle { font-size: 13pt; color: #a0aec0; margin-bottom: 60px; letter-spacing: 2px; text-transform: uppercase; }
     .cover-event { font-size: 26pt; font-weight: 700; color: #fff; margin-bottom: 12px; }
     .cover-club { font-size: 16pt; color: #90cdf4; margin-bottom: 60px; }
     .cover-meta { font-size: 11pt; color: #718096; }
     .cover-meta span { display: block; margin: 4px 0; }
-    .cover-divider { width: 60px; height: 3px; background: #e94560; margin: 30px auto; }
+    .cover-divider { width: 60px; height: 3px; background: #17d15a; margin: 30px auto; }
 
     /* Content pages */
     .page { padding: 25mm 20mm; }
-    h1.section-title { font-size: 18pt; color: #0f3460; border-bottom: 3px solid #e94560; padding-bottom: 8px; margin-bottom: 20px; }
+    h1.section-title { font-size: 18pt; color: #0f3460; border-bottom: 3px solid #17d15a; padding-bottom: 8px; margin-bottom: 20px; }
     h2.section-title { font-size: 14pt; color: #0f3460; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 16px; margin-top: 28px; }
     p.content { margin-bottom: 16px; color: #2d3748; text-align: justify; }
 
