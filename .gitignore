@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Environment files
+.env
+server/.env
+
+# Firebase credentials — NEVER commit this
+server/config/*.json
+!server/config/package.json
+
+# Build artifacts
+client/dist/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Editor
+.vscode/
+.idea/

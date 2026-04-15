@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Users ───────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Any authenticated user can read user profiles (needed for name/email lookups)
+      allow read: if request.auth != null;
+      // Users can only write their own profile
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ─── Counters (internal, backend only) ──────────────────────────────
+    match /counters/{counterId} {
+      allow read, write: if false; // Backend only via Admin SDK
+    }
+
+    // ─── Proposals ───────────────────────────────────────────────────────
+    match /proposals/{proposalId} {
+
+      // Helper functions
+      function isStudent() {
+        return request.auth != null &&
+               resource.data.studentId == request.auth.uid;
+      }
+      function isFIC() {
+        return request.auth != null &&
+               resource.data.ficId == request.auth.uid;
+      }
+      function isKSACCore() {
+        return request.auth != null &&
+               request.auth.uid in resource.data.ksacCoreIds;
+      }
+      function isReviewer() {
+        return isFIC() || isKSACCore();
+      }
+      function isAuthorized() {
+        return isStudent() || isReviewer();
+      }
+
+      // Read: only authorized parties
+      allow read: if isAuthorized();
+
+      // Create: any authenticated user (role enforcement is on backend)
+      allow create: if request.auth != null;
+
+      // Update: student can update their own (drafting or review_requested)
+      //         reviewers can update to record decisions
+      allow update: if isAuthorized();
+
+      // Delete: nobody (admin only via backend)
+      allow delete: if false;
+    }
+  }
+}
