@@ -102,8 +102,13 @@ const createProposal = async (req, res) => {
     const { uid, email } = req.user;
 
     const userDoc = await db.collection('users').doc(uid).get();
-    if (!userDoc.exists || userDoc.data().role !== 'student') {
-      return res.status(403).json({ message: 'Only students can create proposals.' });
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ message: 'User profile not found in database. Please register a new account.' });
+    }
+
+    if (userDoc.data().role !== 'student') {
+      return res.status(403).json({ message: `Access Denied: Only students can create proposals (Your role: ${userDoc.data().role})` });
     }
 
     const { name: studentName } = userDoc.data();
