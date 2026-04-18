@@ -40,21 +40,47 @@ const WorkflowSlider = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef(null);
-  const tabRefs = useRef([]);
+  const sectionRef = useRef(null);
   const AUTOPLAY_DURATION = 4000;
+
+  // HARD FIX 1: MutationObserver to guard against any sneaky scroll jumps during DOM changes
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new MutationObserver(() => {
+      const scrollY = window.scrollY;
+      requestAnimationFrame(() => {
+        if (Math.abs(window.scrollY - scrollY) > 1) {
+          window.scrollTo({ top: scrollY, behavior: "instant" });
+        }
+      });
+    });
+
+    observer.observe(el, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!isPaused) {
       timerRef.current = setInterval(() => {
+        // HARD FIX 2: Manual scroll lock during auto-advance
+        const scrollY = window.scrollY;
         setActiveIndex((prev) => (prev + 1) % TABS.length);
+        
+        // Immediate restore before browser paint
+        requestAnimationFrame(() => {
+          if (Math.abs(window.scrollY - scrollY) > 1) {
+            window.scrollTo({ top: scrollY, behavior: "instant" });
+          }
+        });
       }, AUTOPLAY_DURATION);
     }
     return () => clearInterval(timerRef.current);
-  }, [isPaused, TABS.length]);
+  }, [isPaused]);
 
   const handleTabClick = (index) => {
     setActiveIndex(index);
-    // Reset timer on click
     if (timerRef.current) clearInterval(timerRef.current);
     if (!isPaused) {
       timerRef.current = setInterval(() => {
@@ -67,6 +93,8 @@ const WorkflowSlider = () => {
 
   return (
     <section 
+      ref={sectionRef}
+      onFocus={(e) => e.preventDefault()}
       className="w-full max-w-6xl mx-auto py-20 px-6 overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -85,7 +113,6 @@ const WorkflowSlider = () => {
           return (
             <button
               key={tab.id}
-              ref={el => tabRefs.current[idx] = el}
               onClick={() => handleTabClick(idx)}
               className={`relative pb-4 flex-shrink-0 transition-all duration-300 min-w-[120px] text-left`}
             >
@@ -100,10 +127,11 @@ const WorkflowSlider = () => {
               <div className="absolute bottom-0 left-0 w-full h-[2px] bg-white/5 overflow-hidden">
                  {isActive && (
                    <div 
-                     key={idx} // Key forces remount/restart of animation
+                     key={idx} 
                      tabIndex={-1}
+                     aria-hidden="true"
+                     style={{ outline: "none", animationDuration: `${AUTOPLAY_DURATION}ms` }}
                      className="h-full bg-primary origin-left animate-progress-expand"
-                     style={{ animationDuration: `${AUTOPLAY_DURATION}ms` }}
                    />
                  )}
               </div>
@@ -129,21 +157,36 @@ const WorkflowSlider = () => {
             </div>
         </div>
 
-        {/* Left Column: Text Content */}
-        <div className="space-y-6 lg:text-left text-center">
-          <div className="overflow-hidden">
-             <div key={activeIndex} tabIndex={-1} className="animate-slide-up space-y-4">
-                <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase border border-primary/20">
-                  {currentTab.tag}
-                </span>
-                <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary leading-[1.1]">
-                  {currentTab.heading}
-                </h2>
-                <p className="text-lg text-text-muted max-w-md mx-auto lg:mx-0 font-medium leading-relaxed">
-                  {currentTab.body}
-                </p>
-             </div>
-          </div>
+        {/* Left Column: Text Content - HARD FIX 3: Visibility-Toggle Pattern */}
+        <div className="space-y-6 lg:text-left text-center relative min-h-[320px]">
+          {TABS.map((tab, idx) => (
+            <div 
+              key={tab.id}
+              aria-hidden={idx !== activeIndex}
+              tabIndex={-1}
+              style={{
+                opacity: idx === activeIndex ? 1 : 0,
+                pointerEvents: idx === activeIndex ? "auto" : "none",
+                position: idx === activeIndex ? "relative" : "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transition: "opacity 0.4s ease-in-out, transform 0.4s ease-out",
+                transform: idx === activeIndex ? "translateY(0)" : "translateY(10px)"
+              }}
+              className="space-y-4"
+            >
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase border border-primary/20">
+                {tab.tag}
+              </span>
+              <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary leading-[1.1]">
+                {tab.heading}
+              </h2>
+              <p className="text-lg text-text-muted max-w-md mx-auto lg:mx-0 font-medium leading-relaxed">
+                {tab.body}
+              </p>
+            </div>
+          ))}
         </div>
 
         {/* Right Column: Desktop Image */}
