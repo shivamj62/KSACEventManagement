@@ -12,6 +12,7 @@ import StudentDashboard from './pages/dashboard/StudentDashboard';
 import ReviewerDashboard from './pages/dashboard/ReviewerDashboard';
 import ProposalDetail from './pages/proposals/ProposalDetail';
 import WorkflowSlider from './components/landing/WorkflowSlider';
+import PhotoCarousel from './components/landing/PhotoCarousel';
 
 import { useAuth } from './context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -21,6 +22,13 @@ import axios from 'axios';
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || '';
 
 function App() {
+  // Early Warmup Ping for Render Free Tier
+  React.useEffect(() => {
+    axios.get('/api/auth/profile').catch(() => {
+      // We don't care about the result, just waking up the server
+    });
+  }, []);
+
   return (
     <Router>
       <AuthProvider>
@@ -114,6 +122,7 @@ const Home = () => {
       </div>
       
       <WorkflowSlider />
+      <PhotoCarousel />
     </main>
   );
 };
