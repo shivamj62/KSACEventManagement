@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import RoleGuard from './components/RoleGuard';
 import Navbar from './components/Navbar';
+import AppInitGuard from './components/AppInitGuard';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -10,6 +11,7 @@ import NewProposal from './pages/proposals/NewProposal';
 import StudentDashboard from './pages/dashboard/StudentDashboard';
 import ReviewerDashboard from './pages/dashboard/ReviewerDashboard';
 import ProposalDetail from './pages/proposals/ProposalDetail';
+import WorkflowSlider from './components/landing/WorkflowSlider';
 
 import { useAuth } from './context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -22,10 +24,11 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen bg-background flex flex-col">
-          <Navbar />
-          <div className="flex-1 flex flex-col">
-            <Routes>
+        <AppInitGuard>
+          <div className="min-h-screen bg-background flex flex-col">
+            <Navbar />
+            <div className="flex-1 flex flex-col">
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
@@ -73,6 +76,7 @@ function App() {
             <p className="mt-2 text-text-secondary/60">Made with ❤️ by Shivam</p>
           </footer>
         </div>
+        </AppInitGuard>
       </AuthProvider>
     </Router>
   );
@@ -109,16 +113,7 @@ const Home = () => {
         </div>
       </div>
       
-      {/* Hero Decoration */}
-      <div className="mt-20 w-full max-w-5xl aspect-video glass-card overflow-hidden group">
-        <div className="w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-accent/5 flex items-center justify-center p-12">
-           <div className="text-center space-y-4">
-              <p className="text-text-muted text-sm font-mono uppercase tracking-widest">Interactive Workflows Enabled</p>
-              <div className="h-[1px] w-24 bg-border mx-auto"></div>
-              <p className="text-text-secondary">Full Dashboard is now functional.</p>
-           </div>
-        </div>
-      </div>
+      <WorkflowSlider />
     </main>
   );
 };

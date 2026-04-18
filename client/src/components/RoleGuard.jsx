@@ -7,16 +7,11 @@ import { useAuth } from '../context/AuthContext';
  * @param {string[]} allowedRoles - List of roles permitted to access this route.
  */
 const RoleGuard = ({ children, allowedRoles }) => {
-  const { user, role, loading } = useAuth();
+  const { user, role, isAppReady } = useAuth();
   const location = useLocation();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  // Safety fallback - AppInitGuard should prevent this from being null
+  if (!isAppReady) return null;
 
   if (!user) {
     // Redirect to login if not authenticated
@@ -25,7 +20,8 @@ const RoleGuard = ({ children, allowedRoles }) => {
 
   if (allowedRoles && !allowedRoles.includes(role)) {
     // Redirect to their default dashboard if role is unauthorized
-    return <Navigate to={`/dashboard/${role || 'student'}`} replace />;
+    const targetDashboard = (role === 'fic' || role === 'ksac_core') ? '/dashboard/reviewer' : '/dashboard/student';
+    return <Navigate to={targetDashboard} replace />;
   }
 
   return children;

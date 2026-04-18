@@ -14,9 +14,19 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const { registerWithProfile } = useAuth();
+  const { registerWithProfile, user, role, isAppReady } = useAuth();
   const navigate = useNavigate();
+
+  // Reactive redirect when auth system is ready after registration
+  React.useEffect(() => {
+    if (isAppReady && user && role) {
+      if (role === 'student') {
+        navigate('/dashboard/student');
+      } else {
+        navigate('/dashboard/reviewer');
+      }
+    }
+  }, [isAppReady, user, role, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,20 +38,12 @@ const Register = () => {
     setLoading(true);
     
     try {
-      setLoading(true);
-      setError('');
-      
-      const profile = await registerWithProfile(formData.email, formData.password, {
+      await registerWithProfile(formData.email, formData.password, {
         name: formData.name,
         role: formData.role,
         studentId: formData.role === 'student' ? formData.studentId : undefined
       });
-      
-      if (profile.role === 'student') {
-        navigate('/dashboard/student');
-      } else {
-        navigate('/dashboard/reviewer');
-      }
+      // Logic handled by useEffect
     } catch (err) {
       console.error("Registration Error Details:", err);
       // Show specific Firebase error messages or Backend messages

@@ -10,32 +10,27 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { login } = useAuth();
+  const { login, user, role, isAppReady } = useAuth();
   const navigate = useNavigate();
+
+  // Reactive redirect when auth system is ready
+  React.useEffect(() => {
+    if (isAppReady && user && role) {
+      if (role === 'student') {
+        navigate('/dashboard/student');
+      } else {
+        navigate('/dashboard/reviewer');
+      }
+    }
+  }, [isAppReady, user, role, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const userCredential = await login(email, password);
-      const token = await userCredential.user.getIdToken();
-      
-      // Fetch profile manually to ensure we have the role immediately
-      const res = await axios.get('/api/auth/profile', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      const role = res.data.role;
-      
-      // Small delay helps browser password manager capture the form
-      setTimeout(() => {
-        if (role === 'student') {
-          navigate('/dashboard/student');
-        } else {
-          navigate('/dashboard/reviewer');
-        }
-      }, 100);
+      await login(email, password);
+      // Logic handled by useEffect
     } catch (err) {
       console.error(err);
       setError('Invalid email or password. Please try again.');

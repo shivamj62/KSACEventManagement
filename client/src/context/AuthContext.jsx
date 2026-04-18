@@ -15,27 +15,31 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isAppReady, setIsAppReady] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        setUser(firebaseUser);
         try {
+          setUser(firebaseUser);
           const token = await firebaseUser.getIdToken();
+          
+          // Fetch user profile (role included)
           const response = await axios.get('/api/auth/profile', {
              headers: { Authorization: `Bearer ${token}` }
           });
+          
           setProfile(response.data);
         } catch (error) {
-          console.error("Error fetching user role:", error);
-          setProfile({ role: 'student' }); // Fallback
+          console.error("Auth initialization error (profile fetch):", error);
+          setUser(null);
+          setProfile(null);
         }
       } else {
         setUser(null);
         setProfile(null);
       }
-      setLoading(false);
+      setIsAppReady(true); // Always set true after resolution
     });
 
     return () => unsubscribe();
@@ -56,21 +60,24 @@ export const AuthProvider = ({ children }) => {
     return response.data;
   };
 
-  const logout = () => signOut(auth);
+  const logout = async () => {
+    await signOut(auth);
+    // Note: onAuthStateChanged will handle state cleanup
+  };
 
   const value = {
     user,
     profile,
     role: profile?.role,
+    isAppReady,
     login,
     registerWithProfile,
-    logout,
-    loading
+    logout
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
