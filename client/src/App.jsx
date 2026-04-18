@@ -32,13 +32,16 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppInitGuard>
           <div className="min-h-screen bg-background flex flex-col">
             <Navbar />
             <div className="flex-1 flex flex-col">
               <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={
+                <AppInitGuard>
+                  <Home />
+                </AppInitGuard>
+              } />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 
@@ -84,7 +87,6 @@ function App() {
             <p className="mt-2 text-text-secondary/60">Made with ❤️ by Shivam</p>
           </footer>
         </div>
-        </AppInitGuard>
       </AuthProvider>
     </Router>
   );

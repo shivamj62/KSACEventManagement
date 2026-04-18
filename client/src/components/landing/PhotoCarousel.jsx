@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const EVENTS = [
-  { id: "01", name: "KIITMUN", image: "/photos/479697275_1190732002438388_627179603550390800_n.jpg" },
-  { id: "02", name: "KIITFEST", image: "/photos/480321028_1194235982087990_7860108155487454201_n.jpg" },
-  { id: "03", name: "TEDx KIIT", image: "/photos/480909620_1200939471417641_4037515895507698992_n.jpg" },
-  { id: "04", name: "Convocation", image: "/photos/481230724_1201165661395022_2507318876534933120_n.jpg" },
-  { id: "05", name: "Annual Meet", image: "/photos/481767622_1201133934731528_741848594955274261_n.jpg" },
-  { id: "06", name: "Star Night", image: "/photos/482005919_1201079841403604_1359278385822114259_n.jpg" },
-  { id: "07", name: "Cultural Night", image: "/photos/488773398_1228821671962754_121279698391982468_n.jpg" }
+  { id: "01", name: "KIITMUN", image: "/images/479697275_1190732002438388_627179603550390800_n.jpg" },
+  { id: "02", name: "KIITFEST", image: "/images/480321028_1194235982087990_7860108155487454201_n.jpg" },
+  { id: "03", name: "TEDx KIIT", image: "/images/480909620_1200939471417641_4037515895507698992_n.jpg" },
+  { id: "04", name: "Convocation", image: "/images/481230724_1201165661395022_2507318876534933120_n.jpg" },
+  { id: "05", name: "Annual Meet", image: "/images/481767622_1201133934731528_741848594955274261_n.jpg" },
+  { id: "06", name: "Star Night", image: "/images/482005919_1201079841403604_1359278385822114259_n.jpg" },
+  { id: "07", name: "Cultural Night", image: "/images/488773398_1228821671962754_121279698391982468_n.jpg" }
 ];
 
 const PhotoCarousel = () => {
