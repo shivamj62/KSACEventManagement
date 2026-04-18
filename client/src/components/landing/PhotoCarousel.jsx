@@ -14,6 +14,8 @@ const PhotoCarousel = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+  const tabRefs = useRef([]);
   const AUTOPLAY_DURATION = 5000;
 
   useEffect(() => {
@@ -43,6 +45,13 @@ const PhotoCarousel = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
+      {/* Hidden Preload Cache - Forces browser to download all images on mount */}
+      <div className="hidden" aria-hidden="true">
+        {EVENTS.map(event => (
+          <img key={`preload-${event.id}`} src={event.image} alt="" />
+        ))}
+      </div>
+
       {/* Cinematic Background */}
       <div className="absolute inset-0 z-0">
         {EVENTS.map((event, idx) => (
@@ -62,20 +71,36 @@ const PhotoCarousel = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 items-center">
           
           {/* Left: Navigation & Branding */}
-          <div className="space-y-12">
-            <div>
+          <div className="space-y-6">
+            <div className="space-y-2">
               <h2 className="text-5xl font-bold tracking-tight">
                 Our <span className="text-primary italic">Events.</span>
               </h2>
+              
+              {/* FIXED EVENT NAME WITH GLOW */}
+              <div className="min-h-[100px] flex items-end">
+                <div 
+                  key={activeTab}
+                  tabIndex={-1}
+                  style={{ 
+                    animation: "fadeIn 0.3s ease forwards",
+                    textShadow: "0 0 30px rgba(34, 197, 94, 0.7), 0 0 60px rgba(34, 197, 94, 0.4), 0 0 100px rgba(34, 197, 94, 0.2)"
+                  }}
+                  className="text-6xl md:text-7xl font-bold text-white tracking-tighter"
+                >
+                  {currentEvent.name}
+                </div>
+              </div>
             </div>
 
             {/* Numbers List - Desktop/Tablet */}
-            <div className="hidden md:flex flex-col gap-6">
+            <div className="hidden md:flex flex-col gap-6 pt-6">
               {EVENTS.map((event, idx) => {
                 const isActive = idx === activeTab;
                 return (
                   <div 
                     key={event.id}
+                    ref={el => tabRefs.current[idx] = el}
                     onClick={() => handleTabClick(idx)}
                     className="flex items-center cursor-pointer group/item"
                   >
@@ -90,24 +115,24 @@ const PhotoCarousel = () => {
                         {event.id}
                       </span>
                     </div>
-                    {isActive && (
-                      <div className="ml-6 animate-slide-right">
-                        <p className="text-2xl font-bold text-white tracking-tight">{event.name}</p>
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
 
             {/* Mobile Navigation */}
-            <div className="md:hidden space-y-6">
+            <div className="md:hidden pt-4">
               <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                 {EVENTS.map((event, idx) => {
                   const isActive = idx === activeTab;
                   return (
                     <button 
                       key={event.id}
+                      ref={el => {
+                        // For dual-layout, we can use the same index but separate ref array if needed,
+                        // but since they don't exist simultaneously, idx is fine.
+                        tabRefs.current[idx] = el;
+                      }}
                       onClick={() => handleTabClick(idx)}
                       className={`flex-shrink-0 w-14 h-14 flex items-center justify-center border text-lg font-black transition-all ${
                         isActive ? 'border-primary text-white bg-primary/10' : 'border-white/5 text-[#4b5563]'
@@ -117,9 +142,6 @@ const PhotoCarousel = () => {
                     </button>
                   );
                 })}
-              </div>
-              <div key={activeTab} className="animate-slide-up">
-                <p className="text-2xl font-bold text-white italic">{currentEvent.name}</p>
               </div>
             </div>
           </div>
@@ -149,6 +171,10 @@ const PhotoCarousel = () => {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
         @keyframes slide-right {
           from { opacity: 0; transform: translateX(-10px); }
           to { opacity: 1; transform: translateX(0); }

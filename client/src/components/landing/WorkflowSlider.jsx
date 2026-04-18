@@ -40,19 +40,17 @@ const WorkflowSlider = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef(null);
+  const tabRefs = useRef([]);
   const AUTOPLAY_DURATION = 4000;
 
   useEffect(() => {
     if (!isPaused) {
       timerRef.current = setInterval(() => {
-        setActiveIndex((prev) => (prev + 1) % TABS.current.length);
+        setActiveIndex((prev) => (prev + 1) % TABS.length);
       }, AUTOPLAY_DURATION);
     }
     return () => clearInterval(timerRef.current);
   }, [isPaused, TABS.length]);
-
-  // Fix: The TABS.length in dependency array should be constant, but TABS is static.
-  // Actually, using a functional setter is fine.
 
   const handleTabClick = (index) => {
     setActiveIndex(index);
@@ -73,6 +71,13 @@ const WorkflowSlider = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
+      {/* Hidden Preload Cache */}
+      <div className="hidden" aria-hidden="true">
+        {TABS.map(tab => (
+          <img key={`preload-${tab.id}`} src={tab.image} alt="" />
+        ))}
+      </div>
+
       {/* Horizontal Tabs */}
       <div className="flex gap-4 md:gap-8 mb-12 border-b border-white/5 overflow-x-auto no-scrollbar scroll-smooth pb-1">
         {TABS.map((tab, idx) => {
@@ -80,6 +85,7 @@ const WorkflowSlider = () => {
           return (
             <button
               key={tab.id}
+              ref={el => tabRefs.current[idx] = el}
               onClick={() => handleTabClick(idx)}
               className={`relative pb-4 flex-shrink-0 transition-all duration-300 min-w-[120px] text-left`}
             >
@@ -95,6 +101,7 @@ const WorkflowSlider = () => {
                  {isActive && (
                    <div 
                      key={idx} // Key forces remount/restart of animation
+                     tabIndex={-1}
                      className="h-full bg-primary origin-left animate-progress-expand"
                      style={{ animationDuration: `${AUTOPLAY_DURATION}ms` }}
                    />
@@ -125,7 +132,7 @@ const WorkflowSlider = () => {
         {/* Left Column: Text Content */}
         <div className="space-y-6 lg:text-left text-center">
           <div className="overflow-hidden">
-             <div key={activeIndex} className="animate-slide-up space-y-4">
+             <div key={activeIndex} tabIndex={-1} className="animate-slide-up space-y-4">
                 <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase border border-primary/20">
                   {currentTab.tag}
                 </span>

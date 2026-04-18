@@ -15,7 +15,10 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [isAppReady, setIsAppReady] = useState(false);
+  // Persistent ready state to prevent disruptive buffering on refresh
+  const [isAppReady, setIsAppReady] = useState(() => {
+    return sessionStorage.getItem('ksac_app_initialized') === 'true';
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -39,7 +42,8 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setProfile(null);
       }
-      setIsAppReady(true); // Always set true after resolution
+      setIsAppReady(true);
+      sessionStorage.setItem('ksac_app_initialized', 'true');
     });
 
     return () => unsubscribe();
