@@ -160,8 +160,8 @@ FROM_EMAIL=noreply@ksac.kiit.ac.in
 
 ## Author
 
-Built by **[Your Name]** — Computer Science, KIIT University  
-[LinkedIn](#) · [Portfolio](#) · [Email](#)
+Built by Shivam Jaiswal — Computer Science, KIIT University  
+[LinkedIn](https://www.linkedin.com/in/shivam-jaiswal-15151b241/) 
 
 ---
 
