@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Check, 
@@ -28,14 +28,37 @@ const STEPS = [
   { id: 7, title: 'Review', icon: Layers },
 ];
 
-const NewProposal = () => {
+const NewProposal = ({ isEdit = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { id: editId } = useParams();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [proposalId, setProposalId] = useState(null);
+  const [proposalId, setProposalId] = useState(editId || null);
+
+  // Load existing data if editing
+  useEffect(() => {
+    if (editId) {
+      const fetchEditData = async () => {
+        try {
+          const token = await user.getIdToken();
+          const res = await axios.get(`/api/proposals/${editId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const { formData: loadedData } = res.data;
+          if (loadedData) {
+             setFormData(prev => ({ ...prev, ...loadedData }));
+          }
+        } catch (err) {
+          console.error("Error loading proposal for edit:", err);
+          alert("Failed to load proposal data");
+        }
+      };
+      fetchEditData();
+    }
+  }, [editId, user]);
 
   // Form State
   const [formData, setFormData] = useState({

@@ -15,7 +15,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { register } = useAuth();
+  const { registerWithProfile } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -28,20 +28,20 @@ const Register = () => {
     setLoading(true);
     
     try {
-      // 1. Create user in Firebase Auth
-      const { user } = await register(formData.email, formData.password);
-      const token = await user.getIdToken();
+      setLoading(true);
+      setError('');
       
-      // 2. Register profile in our Backend
-      await axios.post('/api/auth/register', {
+      const profile = await registerWithProfile(formData.email, formData.password, {
         name: formData.name,
         role: formData.role,
         studentId: formData.role === 'student' ? formData.studentId : undefined
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       
-      navigate('/');
+      if (profile.role === 'student') {
+        navigate('/dashboard/student');
+      } else {
+        navigate('/dashboard/reviewer');
+      }
     } catch (err) {
       console.error("Registration Error Details:", err);
       // Show specific Firebase error messages or Backend messages

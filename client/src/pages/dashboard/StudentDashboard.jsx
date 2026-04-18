@@ -120,9 +120,22 @@ const StudentDashboard = () => {
                     <span className="text-xs text-text-muted">
                       Updated {new Date(proposal.updatedAt?._seconds * 1000).toLocaleDateString()}
                     </span>
-                    <div className="flex items-center gap-1 text-primary text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                      View Details
-                      <ChevronRight size={16} />
+                    <div className="flex items-center gap-3">
+                      {(proposal.status === 'draft' || proposal.status === 'review_requested') && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/proposals/edit/${proposal.id}`);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-500 text-xs font-bold hover:bg-blue-500/20 transition-all border border-blue-500/20"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      <div className="flex items-center gap-1 text-primary text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                        Details
+                        <ChevronRight size={16} />
+                      </div>
                     </div>
                   </div>
                 </div>

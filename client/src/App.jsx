@@ -44,6 +44,12 @@ function App() {
                 </RoleGuard>
               } />
 
+              <Route path="/proposals/edit/:id" element={
+                <RoleGuard allowedRoles={['student']}>
+                  <NewProposal isEdit={true} />
+                </RoleGuard>
+              } />
+
               {/* Reviewer Protected Routes (FIC + KSAC_CORE) */}
               <Route path="/dashboard/reviewer" element={
                 <RoleGuard allowedRoles={['fic', 'ksac_core']}>
@@ -64,6 +70,7 @@ function App() {
 
           <footer className="py-8 border-t border-white/5 text-center text-text-muted text-sm mt-auto">
             &copy; {new Date().getFullYear()} KIIT Student Activity Centre. All rights reserved.
+            <p className="mt-2 text-text-secondary/60">Made with ❤️ by Shivam</p>
           </footer>
         </div>
       </AuthProvider>

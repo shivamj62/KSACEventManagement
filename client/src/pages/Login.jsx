@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
+import axios from 'axios';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,10 +17,25 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
     try {
-      await login(email, password);
-      navigate('/');
+      const userCredential = await login(email, password);
+      const token = await userCredential.user.getIdToken();
+      
+      // Fetch profile manually to ensure we have the role immediately
+      const res = await axios.get('/api/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const role = res.data.role;
+      
+      // Small delay helps browser password manager capture the form
+      setTimeout(() => {
+        if (role === 'student') {
+          navigate('/dashboard/student');
+        } else {
+          navigate('/dashboard/reviewer');
+        }
+      }, 100);
     } catch (err) {
       console.error(err);
       setError('Invalid email or password. Please try again.');

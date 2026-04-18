@@ -23,13 +23,10 @@ export const AuthProvider = ({ children }) => {
         setUser(firebaseUser);
         try {
           const token = await firebaseUser.getIdToken();
-          
           const response = await axios.get('/api/auth/profile', {
              headers: { Authorization: `Bearer ${token}` }
           });
-          
           setProfile(response.data);
-          
         } catch (error) {
           console.error("Error fetching user role:", error);
           setProfile({ role: 'student' }); // Fallback
@@ -45,7 +42,20 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (email, password) => signInWithEmailAndPassword(auth, email, password);
-  const register = (email, password) => createUserWithEmailAndPassword(auth, email, password);
+  
+  const registerWithProfile = async (email, password, profileData) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const token = await userCredential.user.getIdToken();
+    
+    const response = await axios.post('/api/auth/register', profileData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    setProfile(response.data);
+    setUser(userCredential.user);
+    return response.data;
+  };
+
   const logout = () => signOut(auth);
 
   const value = {
@@ -53,7 +63,7 @@ export const AuthProvider = ({ children }) => {
     profile,
     role: profile?.role,
     login,
-    register,
+    registerWithProfile,
     logout,
     loading
   };
