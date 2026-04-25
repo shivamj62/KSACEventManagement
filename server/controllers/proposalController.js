@@ -2,6 +2,30 @@ const { db, admin } = require('../config/firebase');
 const { generateProposalId } = require('../utils/counter');
 const { sendEmailOnStatusChange } = require('../services/emailService');
 const { generateProposalPDF } = require('../services/pdfService');
+const { REVIEWER_MAPPING } = require('../config/reviewerMapping');
+
+// ─── Helper: Resolve KSAC Core UIDs from email mapping ───────────────────────
+const resolveKsacCoreIds = async (eventType) => {
+  const emails = REVIEWER_MAPPING[eventType];
+  if (!emails || emails.length === 0) {
+    throw new Error(`Invalid or unmapped eventType: "${eventType}". Must be technical, non-technical, or both.`);
+  }
+
+  const uids = [];
+  for (const email of emails) {
+    const snapshot = await db.collection('users')
+      .where('email', '==', email)
+      .where('role', '==', 'ksac_core')
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
+      throw new Error(`KSAC Core reviewer not found for email: ${email}. Ensure this account is registered with role 'ksac_core'.`);
+    }
+    uids.push(snapshot.docs[0].id);
+  }
+  return uids;
+};
 
 // ─── Helper: Compute overall status from approvals ───────────────────────────
 const computeOverallStatus = (approvals) => {
@@ -112,12 +136,20 @@ const createProposal = async (req, res) => {
     }
 
     const { name: studentName } = userDoc.data();
-    const { ficId, ksacCoreIds, formData, isDraft } = req.body;
+    const { ficId, formData, isDraft } = req.body;
 
     // Validation
     if (!ficId) return res.status(400).json({ message: 'ficId is required.' });
-    if (!ksacCoreIds || ksacCoreIds.length !== 3) {
-      return res.status(400).json({ message: 'Exactly 3 KSAC Core member IDs are required.' });
+
+    const eventType = formData?.eventType;
+    if (!eventType) return res.status(400).json({ message: 'formData.eventType is required (technical, non-technical, or both).' });
+
+    // Auto-resolve KSAC Core reviewers based on event type
+    let ksacCoreIds;
+    try {
+      ksacCoreIds = await resolveKsacCoreIds(eventType);
+    } catch (resolveErr) {
+      return res.status(400).json({ message: resolveErr.message });
     }
 
     const proposalId = await generateProposalId();
@@ -176,14 +208,26 @@ const updateProposal = async (req, res) => {
       return res.status(400).json({ message: `Proposal cannot be edited in "${data.status}" status.` });
     }
 
-    const { formData, ficId, ksacCoreIds, isDraft } = req.body;
+    const { formData, ficId, isDraft } = req.body;
 
-    // On re-submission after review_requested, reset all approvals to pending
     const isResubmission = data.status === 'review_requested' && !isDraft;
     const newStatus = isDraft ? data.status : 'in_process';
-    const updatedApprovals = isResubmission
-      ? buildInitialApprovals(ficId || data.ficId, ksacCoreIds || data.ksacCoreIds)
-      : data.approvals;
+
+    // On re-submission after review_requested:
+    // ONLY reset the reviewer(s) who requested changes back to pending.
+    // Reviewers who already approved keep their approved status — they
+    // should not have to re-approve because of someone else's review request.
+    let updatedApprovals = data.approvals;
+    if (isResubmission) {
+      updatedApprovals = Object.fromEntries(
+        Object.entries(data.approvals).map(([uid, approval]) => [
+          uid,
+          approval.decision === 'review_requested'
+            ? { ...approval, decision: 'pending', comment: '', decidedAt: null }
+            : approval
+        ])
+      );
+    }
 
     const updatePayload = {
       formData: formData || data.formData,
@@ -193,13 +237,13 @@ const updateProposal = async (req, res) => {
     };
 
     if (ficId) updatePayload.ficId = ficId;
-    if (ksacCoreIds && ksacCoreIds.length === 3) updatePayload.ksacCoreIds = ksacCoreIds;
     if (isResubmission) updatePayload.reviewComment = '';
 
     await docRef.update(updatePayload);
 
-    // Notify reviewers on re-submission
-    if (isResubmission) {
+    // Notify reviewers when proposal moves to in_process
+    // (covers both: drafting→submitted and review_requested→resubmitted)
+    if (!isDraft) {
       const updatedDoc = { ...data, ...updatePayload };
       await sendEmailOnStatusChange(id, updatedDoc, 'in_process');
     }

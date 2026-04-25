@@ -106,7 +106,7 @@ const Register = () => {
                   type="text"
                   required
                   className="glass-input w-full pl-10"
-                  placeholder="John Doe"
+                  placeholder="Enter your full name"
                   value={formData.name}
                   onChange={handleChange}
                 />
@@ -123,7 +123,7 @@ const Register = () => {
                     type="email"
                     required
                     className="glass-input w-full pl-10 text-sm"
-                    placeholder="email@kiit.ac.in"
+                    placeholder="Enter your email address"
                     value={formData.email}
                     onChange={handleChange}
                   />
@@ -140,7 +140,7 @@ const Register = () => {
                       type="text"
                       required
                       className="glass-input w-full pl-10 text-sm"
-                      placeholder="2205xxxx"
+                      placeholder="Enter your student ID"
                       value={formData.studentId}
                       onChange={handleChange}
                     />
@@ -158,7 +158,7 @@ const Register = () => {
                   type="password"
                   required
                   className="glass-input w-full pl-10"
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
                 />

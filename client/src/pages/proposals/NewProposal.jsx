@@ -28,6 +28,75 @@ const STEPS = [
   { id: 7, title: 'Review', icon: Layers },
 ];
 
+const SearchableFICDropdown = ({ value, onChange, options }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const dropdownRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => o.uid === value);
+  const filteredOptions = options.filter(o => o.name.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex justify-between items-center px-4 py-3 rounded-lg bg-[#1f2937] text-white border border-[#374151] focus:outline-none"
+      >
+        <span>{selectedOption ? selectedOption.name : "Select FIC"}</span>
+        <ChevronRight size={18} className={`transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-2 bg-[#1f2937] border border-[#374151] rounded-lg shadow-xl overflow-hidden">
+          <div className="p-2 border-b border-[#374151]">
+            <input
+              type="text"
+              autoFocus
+              className="w-full bg-[#111827] text-white px-3 py-2 rounded border-none focus:outline-none focus:ring-1 focus:ring-primary text-sm"
+              placeholder="Search FIC..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="max-h-[240px] overflow-y-auto">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((opt) => (
+                <button
+                  key={opt.uid}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.uid);
+                    setIsOpen(false);
+                    setSearch('');
+                  }}
+                  className={`w-full text-left px-4 py-2.5 transition-colors ${
+                    value === opt.uid ? 'bg-[#166534] text-white' : 'text-text-secondary hover:bg-[#374151] hover:text-white'
+                  }`}
+                >
+                  {opt.name}
+                </button>
+              ))
+            ) : (
+              <div className="px-4 py-3 text-text-muted text-sm italic">No FIC found</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const NewProposal = ({ isEdit = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -69,8 +138,8 @@ const NewProposal = ({ isEdit = false }) => {
     eventDuration: '',
     expectedFootfall: 0,
     eventCategory: 'Technical',
+    eventType: '',
     ficId: '',
-    ksacCoreIds: [],
     about: '',
     details: '',
     vision: '',
@@ -81,19 +150,16 @@ const NewProposal = ({ isEdit = false }) => {
   });
 
   const [availableFICs, setAvailableFICs] = useState([]);
-  const [availableCore, setAvailableCore] = useState([]);
 
-  // Fetch Reviewers on Load
+  // Fetch FIC reviewers on load (Core members are auto-assigned by backend)
   useEffect(() => {
     const fetchReviewers = async () => {
       try {
         const token = await user.getIdToken();
         const fics = await axios.get('/api/auth/role/fic', { headers: { Authorization: `Bearer ${token}` } });
-        const core = await axios.get('/api/auth/role/ksac_core', { headers: { Authorization: `Bearer ${token}` } });
         setAvailableFICs(fics.data);
-        setAvailableCore(core.data);
       } catch (err) {
-        console.error("Error fetching reviewers:", err);
+        console.error("Error fetching FICs:", err);
       }
     };
     fetchReviewers();
@@ -103,17 +169,16 @@ const NewProposal = ({ isEdit = false }) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const saveAsDraft = async () => {
+  const saveAsDraft = async (latestData = formData) => {
     setIsSaving(true);
     try {
       const token = await user.getIdToken();
       if (proposalId) {
-        await axios.put(`/api/proposals/${proposalId}`, { formData, isDraft: true }, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`/api/proposals/${proposalId}`, { formData: latestData, isDraft: true }, { headers: { Authorization: `Bearer ${token}` } });
       } else {
         const res = await axios.post('/api/proposals', { 
-          ficId: formData.ficId, 
-          ksacCoreIds: formData.ksacCoreIds, 
-          formData, 
+          ficId: latestData.ficId, 
+          formData: latestData, 
           isDraft: true 
         }, { headers: { Authorization: `Bearer ${token}` } });
         setProposalId(res.data.proposalId);
@@ -126,14 +191,13 @@ const NewProposal = ({ isEdit = false }) => {
   };
 
   const handleNext = async () => {
-    // Validation for Step 1
     if (currentStep === 1) {
       if (!formData.ficId) {
         alert("Please select a Faculty In-Charge (FIC)");
         return;
       }
-      if (formData.ksacCoreIds.length !== 3) {
-        alert("Please select exactly 3 KSAC Core members");
+      if (!formData.eventType) {
+        alert("Please select an Event Type");
         return;
       }
     }
@@ -150,13 +214,15 @@ const NewProposal = ({ isEdit = false }) => {
     setLoading(true);
     try {
       const token = await user.getIdToken();
-      // Final submission (not draft)
       if (proposalId) {
-        await axios.put(`/api/proposals/${proposalId}`, { formData, isDraft: false }, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(
+          `/api/proposals/${proposalId}`,
+          { ficId: formData.ficId, formData, isDraft: false },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
       } else {
         await axios.post('/api/proposals', { 
           ficId: formData.ficId, 
-          ksacCoreIds: formData.ksacCoreIds, 
           formData, 
           isDraft: false 
         }, { headers: { Authorization: `Bearer ${token}` } });
@@ -227,31 +293,27 @@ const NewProposal = ({ isEdit = false }) => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-text-secondary">FIC (Faculty In-Charge)</label>
-                    <select className="glass-input w-full bg-surface" value={formData.ficId} onChange={(e) => handleInputChange('ficId', e.target.value)}>
-                      <option value="">Select FIC</option>
-                      {availableFICs.map(f => <option key={f.uid} value={f.uid}>{f.name}</option>)}
-                    </select>
+                    <SearchableFICDropdown 
+                      value={formData.ficId} 
+                      onChange={(val) => handleInputChange('ficId', val)} 
+                      options={availableFICs} 
+                    />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-text-secondary">KSAC Core (Pick 3 of 4)</label>
-                    <div className="flex gap-2 flex-wrap">
-                      {availableCore.map(c => (
-                        <button 
-                          key={c.uid}
+                    <label className="text-sm font-semibold text-text-secondary">Event Type</label>
+                    <div className="flex gap-3">
+                      {['technical', 'non-technical', 'both'].map(type => (
+                        <button
+                          key={type}
                           type="button"
-                          onClick={() => {
-                            const current = formData.ksacCoreIds;
-                            if (current.includes(c.uid)) {
-                              handleInputChange('ksacCoreIds', current.filter(id => id !== c.uid));
-                            } else if (current.length < 3) {
-                              handleInputChange('ksacCoreIds', [...current, c.uid]);
-                            }
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                            formData.ksacCoreIds.includes(c.uid) ? 'bg-primary/20 border-primary text-primary' : 'bg-white/5 border-white/5 text-text-muted hover:bg-white/10'
+                          onClick={() => handleInputChange('eventType', type)}
+                          className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all capitalize ${
+                            formData.eventType === type 
+                              ? 'bg-[#166534] border-[#22c55e] text-white' 
+                              : 'bg-[#1f2937] border-[#374151] text-[#9ca3af] hover:bg-[#374151]'
                           }`}
                         >
-                          {c.name}
+                          {type.replace('-', ' ')}
                         </button>
                       ))}
                     </div>

@@ -70,7 +70,7 @@ const Login = () => {
                   type="email"
                   required
                   className="glass-input w-full pl-10"
-                  placeholder="name@university.edu"
+                  placeholder="Enter your email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -88,7 +88,7 @@ const Login = () => {
                   type="password"
                   required
                   className="glass-input w-full pl-10"
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />

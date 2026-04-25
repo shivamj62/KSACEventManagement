@@ -22,30 +22,12 @@ const ProposalDetail = () => {
   const [loading, setLoading] = useState(true);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     fetchProposal();
   }, [id]);
-
-  useEffect(() => {
-    if (showPdf && !pdfUrl) {
-      const fetchPdf = async () => {
-        try {
-          const token = await user.getIdToken();
-          const response = await axios.get(`/api/proposals/${id}/pdf`, {
-            headers: { Authorization: `Bearer ${token}` },
-            responseType: 'blob'
-          });
-          const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-          setPdfUrl(url);
-        } catch (err) {
-          console.error("PDF preview failed:", err);
-        }
-      };
-      fetchPdf();
-    }
-  }, [showPdf, id, user, pdfUrl]);
 
   const fetchProposal = async () => {
     try {
@@ -77,22 +59,50 @@ const ProposalDetail = () => {
     }
   };
 
-  const downloadPdf = async () => {
+  // Fetch PDF blob from the server-side PDF generation endpoint.
+  // This works for ALL proposals (in_process, accepted, etc.) since the
+  // server generates it on-demand — we never rely on proposal.pdfUrl.
+  const fetchPdfBlob = async () => {
+    if (pdfBlobUrl) return pdfBlobUrl; // reuse cached blob
+    setPdfLoading(true);
     try {
       const token = await user.getIdToken();
       const response = await axios.get(`/api/proposals/${id}/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: 'application/pdf' })
+      );
+      setPdfBlobUrl(url);
+      return url;
     } catch (err) {
-      console.error("PDF download failed:", err);
+      console.error('PDF generation failed:', err);
+      alert('Failed to generate PDF. Please try again.');
+      return null;
+    } finally {
+      setPdfLoading(false);
     }
+  };
+
+  const handlePreviewToggle = async () => {
+    if (showPdf) {
+      setShowPdf(false);
+      return;
+    }
+    const url = await fetchPdfBlob();
+    if (url) setShowPdf(true);
+  };
+
+  const handleDownload = async () => {
+    const url = await fetchPdfBlob();
+    if (!url) return;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${proposal.proposalId}-proposal.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   if (loading) return (
@@ -132,18 +142,28 @@ const ProposalDetail = () => {
               </button>
             )}
             <button 
-              onClick={() => setShowPdf(!showPdf)}
-              className="btn-secondary py-2 px-4 text-sm flex items-center gap-2"
+              onClick={handlePreviewToggle}
+              disabled={pdfLoading}
+              className="btn-secondary py-2 px-4 text-sm flex items-center gap-2 disabled:opacity-60"
             >
-              <Eye size={18} />
-              {showPdf ? 'Hide Preview' : 'Preview PDF'}
+              {pdfLoading ? (
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Eye size={18} />
+              )}
+              {showPdf ? 'Hide PDF' : 'Preview PDF'}
             </button>
             <button 
-              onClick={downloadPdf}
-              className="btn-secondary py-2 px-4 text-sm flex items-center gap-2"
+              onClick={handleDownload}
+              disabled={pdfLoading}
+              className="btn-secondary py-2 px-4 text-sm flex items-center gap-2 disabled:opacity-60"
             >
-              <Download size={18} />
-              Download
+              {pdfLoading ? (
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Download size={18} />
+              )}
+              Download Proposal
             </button>
           </div>
         </div>
@@ -257,14 +277,13 @@ const ProposalDetail = () => {
               </div>
             )}
 
-            {/* PDF Sidebar Preview (Toggled) */}
-            {showPdf && pdfUrl && (
+            {showPdf && pdfBlobUrl && (
               <div className="glass-card overflow-hidden h-[700px] border-primary/40 shadow-2xl relative">
                 <div className="absolute inset-0 bg-white shadow-inner">
                   <iframe 
-                    src={`${pdfUrl}#toolbar=0`} 
+                    src={`${pdfBlobUrl}#toolbar=0`} 
                     className="w-full h-full border-none"
-                    title="PDF Preview"
+                    title="Proposal PDF Preview"
                   />
                 </div>
               </div>
