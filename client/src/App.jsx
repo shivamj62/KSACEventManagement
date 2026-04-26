@@ -35,10 +35,10 @@ function App() {
     <ReactLenis root>
       <Router>
         <AuthProvider>
-            <div className="min-h-screen bg-background flex flex-col pt-20">
-              <Navbar />
-              <div className="flex-1 flex flex-col">
-                <Routes>
+          <div className="min-h-screen bg-background flex flex-col pt-20">
+            <Navbar />
+            <div className="flex-1 flex flex-col">
+              <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={
                   <AppInitGuard>
@@ -54,7 +54,7 @@ function App() {
                     <StudentDashboard />
                   </RoleGuard>
                 } />
-                
+
                 <Route path="/proposals/new" element={
                   <RoleGuard allowedRoles={['student']}>
                     <NewProposal />
@@ -106,17 +106,18 @@ const Home = () => {
   };
 
   return (
-    <main className="flex-1 flex flex-col items-center">
+    <main className="flex-1 flex-col items-center">
       {/* Scroll-driven Hero Heading */}
-      <TextReveal 
-        text="Design, Propose, & Approve Your Next Event." 
+
+      <TextReveal
+        text=" Approve Your Next Event."
         className="w-full"
       />
 
       {/* Hero CTA & Content */}
       <div className="max-w-4xl text-center space-y-6 pb-32 px-8 -mt-20">
         <p className="text-text-secondary text-lg max-w-2xl mx-auto">
-          The official KIIT Student Activity Centre (KSAC) portal for streamlined event proposals, 
+          The official KIIT Student Activity Centre (KSAC) portal for streamlined event proposals,
           automated PDF generation, and real-time faculty approval.
         </p>
         <div className="flex gap-4 justify-center pt-4">
@@ -130,7 +131,7 @@ const Home = () => {
           <Link to={getDashboardLink()} className="btn-secondary text-base px-8">Track Progress</Link>
         </div>
       </div>
-      
+
       <div className="w-full">
         <WorkflowSlider />
         <PhotoGallery />
